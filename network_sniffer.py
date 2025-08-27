@@ -3,10 +3,10 @@
 Network Packet Sniffer
 A minimal network packet sniffer tool using Scapy
 """
-
 import argparse
 import sys
 import os
+import platform
 from datetime import datetime
 
 try:
@@ -15,6 +15,20 @@ except ImportError:
     print("Error: Scapy library not found.")
     print("Please install it using: pip install scapy")
     sys.exit(1)
+
+def is_admin():
+    """
+    Cross-platform function to check for administrator/root privileges
+    """
+    try:
+        if platform.system() == "Windows":
+            import ctypes
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        else:
+            # Unix-like systems (Linux, macOS)
+            return os.geteuid() == 0
+    except Exception:
+        return False
 
 def packet_callback(packet):
     """
@@ -133,10 +147,15 @@ def main():
     
     args = parser.parse_args()
     
-    # Check for root privileges
-    if os.geteuid() != 0:
-        print("Error: This script requires root privileges to capture packets.")
-        print("Please run with sudo: sudo python3 network_sniffer.py")
+    # Check for administrator/root privileges (cross-platform)
+    if not is_admin():
+        if platform.system() == "Windows":
+            print("Error: This script requires administrator privileges to capture packets.")
+            print("Please run as administrator: Right-click Command Prompt/PowerShell -> 'Run as administrator'")
+            print("Then run: python network_sniffer.py")
+        else:
+            print("Error: This script requires root privileges to capture packets.")
+            print("Please run with sudo: sudo python3 network_sniffer.py")
         sys.exit(1)
     
     print("Network Packet Sniffer")
